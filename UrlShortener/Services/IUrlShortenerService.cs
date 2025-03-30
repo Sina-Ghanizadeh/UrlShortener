@@ -9,7 +9,7 @@ namespace UrlShortener.Services;
 
 public interface IUrlShortenerService
 {
-    Task<string> ShortenUrlAsync(string url);
+    Task<string> ShortenUrlAsync(string url, DateTime? expirationDate = null, int? maxHitCount = null);
     Task<string> GetOriginalUrlAsync(string shortenCode);
 }
 public class UrlShortenerService : IUrlShortenerService
@@ -22,7 +22,7 @@ public class UrlShortenerService : IUrlShortenerService
         _appSettings = appSettings.Value;
     }
 
-    public async Task<string> ShortenUrlAsync(string url)
+    public async Task<string> ShortenUrlAsync(string url, DateTime? expirationDate = null, int? maxHitCount = null)
     {
         var urlMapping = await _dbContext.UrlMappings
                         .Where(x => x.ExpirationDate != null && x.ExpirationDate <= DateTime.UtcNow)
@@ -37,8 +37,10 @@ public class UrlShortenerService : IUrlShortenerService
         {
             OriginalUrl = url,
             ShortenCode = shortenCode,
-
+            ExpirationDate =expirationDate,
+            MaxHitCount = maxHitCount
         };
+
         _dbContext.UrlMappings.Add(urlMapping);
         await _dbContext.SaveChangesAsync();
 

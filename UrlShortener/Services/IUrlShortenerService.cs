@@ -25,7 +25,9 @@ public class UrlShortenerService : IUrlShortenerService
     public async Task<string> ShortenUrlAsync(string url, DateTime? expirationDate = null, int? maxHitCount = null)
     {
         var urlMapping = await _dbContext.UrlMappings
-                        .Where(x => x.ExpirationDate != null && x.ExpirationDate <= DateTime.UtcNow)
+                        .Where(x => (x.ExpirationDate != null && x.ExpirationDate <= DateTime.UtcNow) ||
+                        (x.MaxHitCount != null && x.HitCount >= x.MaxHitCount)
+                        )
             .FirstOrDefaultAsync(x => x.OriginalUrl == url);
 
         if (urlMapping != null)
@@ -37,7 +39,7 @@ public class UrlShortenerService : IUrlShortenerService
         {
             OriginalUrl = url,
             ShortenCode = shortenCode,
-            ExpirationDate =expirationDate,
+            ExpirationDate = expirationDate,
             MaxHitCount = maxHitCount
         };
 
@@ -50,7 +52,10 @@ public class UrlShortenerService : IUrlShortenerService
     public async Task<string> GetOriginalUrlAsync(string shortenCode)
     {
         var urlMapping = await _dbContext.UrlMappings
-            .Where(x => x.ExpirationDate == null || x.ExpirationDate > DateTime.UtcNow)
+            .Where(x => x.ExpirationDate == null ||
+            x.ExpirationDate > DateTime.UtcNow ||
+            x.MaxHitCount == null ||
+            x.HitCount < x.MaxHitCount)
             .FirstOrDefaultAsync(x => x.ShortenCode == shortenCode);
 
         if (urlMapping is null)

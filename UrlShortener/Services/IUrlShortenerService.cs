@@ -47,6 +47,7 @@ public class UrlShortenerService : IUrlShortenerService
     public async Task<string> GetOriginalUrlAsync(string shortenCode)
     {
         var urlMapping = await _dbContext.UrlMappings
+            .Where(x => x.ExpirationDate == null || x.ExpirationDate > DateTime.UtcNow)
             .FirstOrDefaultAsync(x => x.ShortenCode == shortenCode);
 
         if (urlMapping != null)

@@ -51,10 +51,13 @@ public class UrlShortenerService : IUrlShortenerService
             .Where(x => x.ExpirationDate == null || x.ExpirationDate > DateTime.UtcNow)
             .FirstOrDefaultAsync(x => x.ShortenCode == shortenCode);
 
-        if (urlMapping != null)
-            return urlMapping.OriginalUrl;
+        if (urlMapping is null)
+            throw new Exception("Shorten code not found.");
 
-        throw new Exception("Shorten code not found.");
+        urlMapping.HitCount++;
+        await _dbContext.SaveChangesAsync();
+
+        return urlMapping.OriginalUrl;
     }
     private async Task<string> GenerateShortenCodeAsync()
     {
